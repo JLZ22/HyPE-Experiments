@@ -1,0 +1,26 @@
+[project]
+name = "hype-experiments"
+version = "0.1.0"
+description = "Testing and training suite for experiments related to Hypothesis Network Planned Exploration paper(s)."
+authors = [
+    {name = "John Zeng",email = "johnzeng878@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "torch (>=2.6.0,<3.0.0)",
+    "torchvision (>=0.21.0,<0.22.0)",
+    "torchaudio (>=2.6.0,<3.0.0)",
+    "gymnasium (>=1.1.1,<2.0.0)",
+    "matplotlib (>=3.10.1,<4.0.0)",
+    "pandas (>=2.2.3,<3.0.0)",
+    "numpy (>=2.2.3,<3.0.0)"
+]
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
