@@ -9,17 +9,36 @@ license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "torch (>=2.6.0,<3.0.0)",
-    "torchvision (>=0.21.0,<0.22.0)",
-    "torchaudio (>=2.6.0,<3.0.0)",
+    "torch (==2.6.0) ; extra != 'cuda126'",
     "gymnasium (>=1.1.1,<2.0.0)",
     "matplotlib (>=3.10.1,<4.0.0)",
     "pandas (>=2.2.3,<3.0.0)",
-    "numpy (>=2.2.3,<3.0.0)"
+    "numpy (>=2.2.3,<3.0.0)",
+]
+
+[project.optional-dependencies]
+cuda126 = [
+    "torch (==2.6.0+cu126)",
 ]
 
 [tool.poetry]
 package-mode = false
+
+[tool.poetry.dependencies]
+torch = [
+    { markers = "extra != 'cuda126'", source = "pytorch-cpu"},
+    { markers = "extra == 'cuda126'", source = "pytorch-cuda126"},
+]
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[[tool.poetry.source]]
+name = "pytorch-cuda126"
+url = "https://download.pytorch.org/whl/cu126"
+priority = "explicit"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
