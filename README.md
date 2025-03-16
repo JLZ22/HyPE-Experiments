@@ -4,10 +4,33 @@ This repository contains implementations of baselines and testbeds for different
 
 ## Installation
 
-This project uses [Poetry](https://python-poetry.org/) for dependency management. If you do not have it, you may install it by referring to the [official documentation](https://python-poetry.org/docs/).
-
-Once poetry is installed, install dependencies by running
+Install dependencies with the following command:
 
 ```bash
-poetry install
+pip install -r requirements.txt
 ```
+
+By default, PyTorch is installed without CUDA support. If you want to use CUDA, first uninstall with 
+
+```bash
+pip uninstall torch torchvision torchaudio
+```
+
+Then, re-install PyTorch with CUDA support by following the instructions on the [PyTorch website](https://pytorch.org/get-started/locally/).
+
+## Usage
+
+To run any of the experiments in the `./experiments` directory, navigate to the root directory of the project and run the following command:
+
+```bash
+python3 -m experiments.<experiment name>
+```
+
+<details>
+<summary>Example</summary>
+If you want to run `foo.py`, run the following command:
+
+```bash
+python3 -m scripts.foo
+```
+</details>
