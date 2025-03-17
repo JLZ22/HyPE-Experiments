@@ -91,8 +91,8 @@ class ClassicAlchemyEnv(gym.Env):
         num_pairs = np.random.randint(0, self.max_blocks)
         
         for _ in range(num_pairs):
-            state = np.random.randint(0, 2, self.n)
-            action = np.random.randint(0, 2 * self.n)
+            state = self.observation_space.sample()
+            action = self.sample_action(stale_ok=True, ending_ok=False)
             blocked_pairs.append((state, action))
         
         return actions, blocked_pairs
@@ -103,7 +103,7 @@ class ClassicAlchemyEnv(gym.Env):
         Returns:
             np.ndarray: The initial state of the environment.
         '''
-        return np.random.randint(0, 2, self.n)
+        return self.observation_space.sample()
     
     def reset(
         self,
@@ -152,6 +152,11 @@ class ClassicAlchemyEnv(gym.Env):
 
         Returns:
             tuple[np.ndarray, float, bool]: The new observation of the environment, the reward for the action, and whether the episode is finished.
+        
+        Raises:
+            RuntimeError: If the reward function has not been set.
+            RuntimeError: If the episode has already finished.
+            ValueError: If the action is out of range.
         '''
         if self.reward_func is None:
             raise RuntimeError("The reward function must be set before taking actions.")
@@ -183,21 +188,50 @@ class ClassicAlchemyEnv(gym.Env):
         reward = self.time_cost
         return self.get_obs(), reward, self.finished
     
-    def sample_action(self, stale_ok: bool = False) -> int:
+    def sample_action(
+        self, 
+        stale_ok: bool = False,
+        ending_ok: bool = False
+    ) -> int:
         '''Sample an action from the action space. If stale_ok is False, 
         then the action will be one that changes the state of the rock. 
 
         Args:
             stale_ok (bool, optional): If True, the sample space will include actions
             that have already been taken. Defaults to False.
+            ending_ok (bool, optional): If True, the sample space will include the
+            ending action. Defaults to False.
 
         Returns:
             int: The sampled action.
-        '''
+            
+        Raises:
+            RuntimeError: If all actions have been taken and ending_ok is False.
+        '''        
         if stale_ok:
-            return self.action_space.sample()
+            sample = self.action_space.sample()
+            if ending_ok:
+                return sample # stale_ok and end_ok
+            while sample == (self.action_space.n - 1):
+                sample = self.action_space.sample()
+            return sample # stale_ok and not end_ok
         else:
-            action = self.action_space.sample()
-            while action in self.stale_actions:
-                action = self.action_space.sample()
-            return action
+            # handle case where stale is not ok and all non-end actions have been taken
+            if len(self.stale_actions) == self.action_space.n - 1:
+                if ending_ok:
+                    return self.action_space.n - 1 # stale not ok and end ok
+                raise RuntimeError("All actions have been taken.") # stale not ok and end not ok
+            # below is if not all non-end actions have been taken
+            sample = self.action_space.sample()
+            if ending_ok:
+                while sample in self.stale_actions:
+                    sample = self.action_space.sample()
+                return sample # stale not ok and end ok
+            while sample == self.action_space.n - 1 or sample in self.stale_actions:
+                sample = self.action_space.sample()
+            return sample # stale not ok and end not ok
+        
+    def render(self):
+        '''Render the environment. This is a no-op.
+        '''
+        pass

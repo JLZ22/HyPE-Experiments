@@ -83,14 +83,14 @@ class TestClassicAlchemyEnv():
         with pytest.raises(AssertionError):
             env.reset((
                 [pot] * env.action_space.n, 
-                [(np.random.randint(0, 2, env.n), env.action_space.n)]
+                [(env.observation_space.sample(), env.action_space.n)]
             ))
             
         # too many blocked pairs
         with pytest.raises(AssertionError):
             env.reset((
                 [pot] * env.action_space.n, 
-                [(np.random.randint(0, 2, env.n), 0)] * (env.max_blocks + 1)
+                [(env.observation_space.sample(), 0)] * (env.max_blocks + 1)
             ))           
             
         # state shape does not match the number of features
@@ -102,7 +102,7 @@ class TestClassicAlchemyEnv():
             
         env.reset((
                 [pot] * env.action_space.n, 
-                [(np.random.randint(0, 2, env.n), 0)] * (env.max_blocks)
+                [(env.observation_space.sample(), 0)] * (env.max_blocks)
             ))   
         env.reset(([pot] * env.action_space.n, []))
         
@@ -139,18 +139,80 @@ class TestClassicAlchemyEnv():
         assert env.observation_space.contains(state), "State is not in the observation space."
         assert reward <= 1.5 and reward >= 0, f"Reward out of range: {reward}"
         
+    @pytest.mark.timeout(2)
     def test_sample_action_1(self):
-        '''Test that the actions are valid, and that 
-        non-stale actions are sampled when stale_ok is False.
+        '''Test non-stale ending_ok actions.
         '''
         env = ClassicAlchemyEnv()
         env.set_reward_func(REWARDS)
         env.reset()
         for _ in range(50):
-            action = env.sample_action(stale_ok=False)
+            action = env.sample_action(stale_ok=False, ending_ok=True)
             assert env.action_space.contains(action), "Action is not in the action space."
             assert action not in env.stale_actions, "Action is stale. It shouldn't be."
             
             _, _, is_finished = env.step(action)
             if is_finished:
                 break
+            
+    @pytest.mark.timeout(2)
+    def test_sample_action_2(self):
+        '''Test stale non-ending actions.
+        '''
+        env = ClassicAlchemyEnv()
+        env.set_reward_func(REWARDS)
+        env.reset()
+        for _ in range(50):
+            action = env.sample_action(stale_ok=True, ending_ok=False)
+            assert env.action_space.contains(action), "Action is not in the action space."
+            assert action != env.action_space.n - 1, "Action is the ending action. It shouldn't be."
+            env.step(action)
+            
+    @pytest.mark.timeout(2)
+    def test_sample_action_3(self):
+        '''Test stale ending_ok actions.
+        '''
+        env = ClassicAlchemyEnv()
+        env.set_reward_func(REWARDS)
+        env.reset()
+        for _ in range(50):
+            action = env.sample_action(stale_ok=True, ending_ok=True)
+            assert env.action_space.contains(action), "Action is not in the action space."
+            
+            _, _, is_finished = env.step(action)
+            if is_finished:
+                break
+            
+    @pytest.mark.timeout(2)
+    def test_sample_action_4(self):
+        '''Test non-stale non-ending actions.
+        '''
+        env = ClassicAlchemyEnv()
+        env.set_reward_func(REWARDS)
+        env.reset()
+        for _ in range(env.action_space.n - 1):
+            action = env.sample_action(stale_ok=False, ending_ok=False)
+            assert env.action_space.contains(action), "Action is not in the action space."
+            assert action != env.action_space.n - 1, "Action is the ending action. It shouldn't be."
+            assert action not in env.stale_actions, "Action is stale. It shouldn't be."
+            env.step(action)
+            
+    @pytest.mark.timeout(2)
+    def test_sample_action_5(self):
+        '''Test non-stale non-ending actions 
+        where all actions are stale. This 
+        should raise an error.
+        '''
+        env = ClassicAlchemyEnv()
+        env.set_reward_func(REWARDS)
+        env.reset()
+        # take all non-ending actions
+        for _ in range(env.action_space.n - 1):
+            action = env.sample_action(stale_ok=False, ending_ok=False)
+            assert env.action_space.contains(action), "Action is not in the action space."
+            assert action != env.action_space.n - 1, "Action is the ending action. It shouldn't be."
+            assert action not in env.stale_actions, "Action is stale. It shouldn't be."
+            env.step(action)
+        # try to sample a non-ending action again - should raise an error
+        with pytest.raises(RuntimeError):
+            env.sample_action(stale_ok=False, ending_ok=False)
