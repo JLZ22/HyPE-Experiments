@@ -1,8 +1,9 @@
-import itertools
 import gymnasium as gym 
 import numpy as np
 import scipy.stats as stats
+from typing import Optional
 
+from .custom_types import World
 from .potion import Potion
 
 class ClassicAlchemyEnv(gym.Env):
@@ -65,11 +66,11 @@ class ClassicAlchemyEnv(gym.Env):
             return sum([rewards[feature] * state[i] for i, feature in enumerate(self.features)])
         self.reward_func = reward_func
         
-    def generate_world(self) -> tuple[list[Potion], list[tuple[np.ndarray, int]]]:
+    def generate_world(self) -> World:
         '''Generate a random world for the environment.
 
         Returns:
-            tuple[list[Potion], tuple[np.ndarray, int]]: The list of actions and a list of blocked (state, action) pairs.
+            World: The list of actions and a list of blocked (state, action) pairs.
         '''
         actions = []
         blocked_pairs = []

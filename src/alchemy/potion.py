@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.stats as stats
-from typing import Optional, Union
+from typing import Union
 
 class Potion():
     '''
