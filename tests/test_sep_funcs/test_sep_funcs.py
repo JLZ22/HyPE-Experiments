@@ -1,0 +1,1 @@
+from src.sep_funcs import hype, hype_stochastic
