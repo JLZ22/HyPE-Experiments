@@ -44,11 +44,13 @@ class Potion():
             if np.any(samples < 0) or np.any(samples > 1):
                 raise ValueError('The distribution of the potion must be within the range [0, 1].')
             
-    def affect(self, state: np.ndarray) -> float:
-        '''Apply the potion on the state and return the resulting state.
+    def use_on(self, state: np.ndarray) -> np.ndarray:
+        '''Use this potion on the given state and 
+        return the state of the rock after applying 
+        the potion as a copy of the original state.
 
         Returns:
-            float: The effect of the potion which is a value between 0 and 1 inclusive.
+            np.ndarray: The new state of the rock.
         '''
         new_state = state.copy() 
         new_state[self.feature_idx] = self.distribution.rvs()
