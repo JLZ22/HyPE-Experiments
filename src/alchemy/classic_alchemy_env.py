@@ -73,16 +73,16 @@ class ClassicAlchemyEnv(gym.Env):
         '''Generate a random world for the environment.
 
         Returns:
-            World: The list of actions and a list of blocked (state, action) pairs.
+            World: The list of Potions and a list of blocked (state, action) pairs.
         '''
         actions = []
         blocked_pairs = []
         # generate the deterministic actions for the environment
         i = 0
         while i < 2 * self.n:
-            actions.append(Potion(i, self.features[i // 2], stats.binom(1, 1)))
+            actions.append(Potion(i // 2, self.features[i // 2], stats.binom(1, 1)))
             i += 1
-            actions.append(Potion(i, self.features[i // 2], stats.binom(1, 0)))
+            actions.append(Potion(i // 2, self.features[i // 2], stats.binom(1, 0)))
             i += 1
         actions.append(Potion(2 * self.n, 'submit', stats.binom(1, 1)))
             
@@ -123,12 +123,58 @@ class ClassicAlchemyEnv(gym.Env):
             assert len(new_wrld) == 2, "The world must have two elements, a list of actions and a list of blocked pairs."
             assert all([isinstance(act, Potion) for act in new_wrld[0]]), "The actions must be instances of the Potion class."
             assert all([len(pair) == 2 for pair in new_wrld[1]]), "The blocked pairs must be tuples of length 2."
-            assert all([isinstance(pair[0], np.ndarray) for pair in new_wrld[1]]), "The states in the blocked pairs must be numpy arrays."
             assert all([pair[0].shape == (self.n,) for pair in new_wrld[1]]), "The states in the blocked pairs must have the same shape as the observation space."
-            assert all([isinstance(pair[1], int) for pair in new_wrld[1]]), "The actions in the blocked pairs must be integers."
             assert all([pair[1] < self.action_space.n for pair in new_wrld[1]]), "The actions in the blocked pairs must be less than the size of the action space."
             assert len(new_wrld[0]) == self.action_space.n, "The number of actions must match the size of the action space."
             assert len(new_wrld[1]) <= self.max_blocks, "The number of blocked pairs must be less than or equal to the maximum number of blocks."
         self.finished = False
         self.curr_state = self.sample_initial_state()
         return self.curr_state
+    
+    def get_obs(self) -> np.ndarray:
+        '''Return the observed current state 
+        of the environment.
+
+        Returns:
+            np.ndarray: The state of the env.
+        '''
+        return self.curr_state.copy()
+    
+    def step(self, action: int) -> tuple[np.ndarray, float, bool]:
+        '''Take the given action in the environment and 
+        return the new state.
+
+        Args:
+            action (int): The action to take in the environment. This 
+            is also the index of the potion to apply.
+
+        Returns:
+            tuple[np.ndarray, float, bool]: The new observation of the environment, the reward for the action, and whether the episode is finished.
+        '''
+        if self.reward_func is None:
+            raise RuntimeError("The reward function must be set before taking actions.")
+        if self.finished:
+            raise RuntimeError("The episode has already finished. You must call reset to start a new episode.")
+        if action < 0 or not self.action_space.contains(action):
+            raise ValueError("The action is out of range.")
+        
+        if action == 2 * self.n: # check if the action is to submit the rock
+            self.finished = True
+            reward = self.reward_func(self.curr_state) # reward is gained at final evaluation
+            return self.get_obs(), reward, self.finished
+        
+        # check if the action is blocked
+        for blocked_state, blocked_action in self.world[1]:
+            if (
+                np.array_equal(self.curr_state, blocked_state) 
+                and 
+                action == blocked_action
+            ):
+                reward = self.time_cost
+                return self.get_obs(), reward, self.finished
+        
+        # any other valid action
+        potion = self.world[0][action]
+        self.curr_state = potion.use_on(self.curr_state)
+        reward = self.time_cost
+        return self.get_obs(), reward, self.finished

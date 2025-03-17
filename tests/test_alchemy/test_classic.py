@@ -6,7 +6,7 @@ from src.alchemy.classic_alchemy_env import ClassicAlchemyEnv
 from src.alchemy.potion import Potion
 
 class TestClassicAlchemyEnv():
-    def test_generate(self):
+    def test_generate_1(self):
         '''Test the generation of the world in the classic alchemy environment. 
         Make sure that the sizes of the actions and blocked pairs are correct.
         '''
@@ -35,10 +35,10 @@ class TestClassicAlchemyEnv():
         rewards = {'luster': 1, 'hardness': 0.5}
         env.set_reward_func(rewards)
         assert env.reward_func is not None
-        assert env.reward_func(np.array([0, 0])) == 0
-        assert env.reward_func(np.array([1, 0])) == 1
-        assert env.reward_func(np.array([0, 1])) == 0.5
-        assert env.reward_func(np.array([1, 1])) == 1.5
+        assert pytest.approx(env.reward_func(np.array([0, 0]))) == 0   
+        assert pytest.approx(env.reward_func(np.array([1, 0]))) == 1   
+        assert pytest.approx(env.reward_func(np.array([0, 1]))) == 0.5 
+        assert pytest.approx(env.reward_func(np.array([1, 1]))) == 1.5 
     
     def test_reward_func_2(self):
         '''Test the case where the reward function is set with only one feature.
@@ -49,8 +49,8 @@ class TestClassicAlchemyEnv():
         rewards = {'luster': 1}
         env.set_reward_func(rewards)
         assert env.reward_func is not None
-        assert env.reward_func(np.array([0, 0])) == 0
-        assert env.reward_func(np.array([1, 0])) == 1
+        assert pytest.approx(env.reward_func(np.array([0, 0]))) == 0
+        assert pytest.approx(env.reward_func(np.array([1, 0]))) == 1
     
     def test_reward_func_3(self):
         '''Test case where input state to reward function is a 
@@ -65,7 +65,7 @@ class TestClassicAlchemyEnv():
         with pytest.raises(AssertionError):
             env.reward_func(np.array([0]))
             
-    def test_reset(self):
+    def test_reset_1(self):
         '''Test that the reset function adequately checks that 
         the input world is valid.
         '''
@@ -106,3 +106,36 @@ class TestClassicAlchemyEnv():
                 [(np.random.randint(0, 2, env.n), 0)] * (env.max_blocks)
             ))   
         env.reset(([pot] * env.action_space.n, []))
+        
+    def test_step_1(self):
+        '''Test the step function with valid non-ending actions. 
+        '''
+        env = ClassicAlchemyEnv()
+        env.reset()
+        env.set_reward_func({'luster': 1, 'hardness': 0.5})
+        
+        # do 50 steps without ending the episode
+        total_reward = 0
+        for i in range(50):
+            # sample valid non-ending action
+            while True:
+                action = env.action_space.sample()
+                if action != env.action_space.n - 1:
+                    break
+            state, reward, done = env.step(action)
+            total_reward += reward
+            assert not done, "The episode is done, but it should not be."
+            assert env.observation_space.contains(state), "State is not in the observation space."
+            assert total_reward == pytest.approx(env.time_cost * (i+1)), f"Reward is incorrect."
+        
+    def test_step_2(self):
+        '''Test the step function with ending action.
+        '''
+        env = ClassicAlchemyEnv()
+        env.reset()
+        env.set_reward_func({'luster': 1, 'hardness': 0.5})
+        action = env.action_space.n - 1
+        state, reward, done = env.step(action)
+        assert done, "The episode is not done, but it should be."
+        assert env.observation_space.contains(state), "State is not in the observation space."
+        assert reward <= 1.5 and reward >= 0, f"Reward out of range: {reward}"
