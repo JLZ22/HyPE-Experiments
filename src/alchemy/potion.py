@@ -34,6 +34,7 @@ class Potion():
         Raises:
             ValueError: If the distribution is not within the range [0, 1].
         '''
+        assert feature_idx >= 0, 'The feature index must be greater than or equal to 0.'
         self.distribution = distribution
         self.feature_idx = feature_idx
         self.feature_name = feature_name
@@ -52,6 +53,8 @@ class Potion():
         Returns:
             np.ndarray: The new state of the rock.
         '''
+        if self.feature_idx >= len(state):
+            raise IndexError(f'The feature with index {self.feature_idx} does not exist in the given state of length {len(state)}.')
         new_state = state.copy() 
         new_state[self.feature_idx] = self.distribution.rvs()
         return new_state
