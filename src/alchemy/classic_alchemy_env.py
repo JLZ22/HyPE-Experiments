@@ -92,3 +92,31 @@ class ClassicAlchemyEnv(gym.Env):
             blocked_pairs.append((state, action))
         
         return actions, blocked_pairs
+    
+    def sample_initial_state(self) -> np.ndarray:
+        '''Generate the initial state of the environment.
+
+        Returns:
+            np.ndarray: The initial state of the environment.
+        '''
+        return np.random.randint(0, 2, self.n)
+    
+    def reset(
+        self,
+        new_wrld: Optional[World] = None
+    ) -> np.ndarray:
+        '''Reset the environment to an initial state. If a new world 
+        is given, then the environment will be reset with that world.
+        Otherwise, the environment will be reset with the same world.
+
+        Args:
+            new_wrld (Optional[World], optional): The new world to reset the environment with. Defaults to None.
+
+        Returns:
+            np.ndarray: The initial state of the environment.
+        '''
+        if new_wrld is not None:
+            self.world = new_wrld
+        self.finished = False
+        self.curr_state = self.sample_initial_state()
+        return self.curr_state
