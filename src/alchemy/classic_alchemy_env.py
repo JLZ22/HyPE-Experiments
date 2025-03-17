@@ -35,6 +35,7 @@ class ClassicAlchemyEnv(gym.Env):
         self.finished = False
         self.action_space = gym.spaces.Discrete(2 * self.n + 1)
         self.observation_space = gym.spaces.MultiBinary(self.n)
+        self.stale_actions = set() # set of actions that have been already taken in this episode
         
         self.curr_state = None 
         self.reward_func = None
@@ -128,6 +129,7 @@ class ClassicAlchemyEnv(gym.Env):
             assert len(new_wrld[0]) == self.action_space.n, "The number of actions must match the size of the action space."
             assert len(new_wrld[1]) <= self.max_blocks, "The number of blocked pairs must be less than or equal to the maximum number of blocks."
         self.finished = False
+        self.stale_actions = set()
         self.curr_state = self.sample_initial_state()
         return self.curr_state
     
@@ -158,6 +160,8 @@ class ClassicAlchemyEnv(gym.Env):
         if action < 0 or not self.action_space.contains(action):
             raise ValueError("The action is out of range.")
         
+        self.stale_actions.add(action)
+        
         if action == 2 * self.n: # check if the action is to submit the rock
             self.finished = True
             reward = self.reward_func(self.curr_state) # reward is gained at final evaluation
@@ -178,3 +182,22 @@ class ClassicAlchemyEnv(gym.Env):
         self.curr_state = potion.use_on(self.curr_state)
         reward = self.time_cost
         return self.get_obs(), reward, self.finished
+    
+    def sample_action(self, stale_ok: bool = False) -> int:
+        '''Sample an action from the action space. If stale_ok is False, 
+        then the action will be one that changes the state of the rock. 
+
+        Args:
+            stale_ok (bool, optional): If True, the sample space will include actions
+            that have already been taken. Defaults to False.
+
+        Returns:
+            int: The sampled action.
+        '''
+        if stale_ok:
+            return self.action_space.sample()
+        else:
+            action = self.action_space.sample()
+            while action in self.stale_actions:
+                action = self.action_space.sample()
+            return action
