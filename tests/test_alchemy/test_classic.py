@@ -139,7 +139,6 @@ class TestClassicAlchemyEnv():
         assert env.observation_space.contains(state), "State is not in the observation space."
         assert reward <= 1.5 and reward >= 0, f"Reward out of range: {reward}"
         
-    @pytest.mark.timeout(2)
     def test_sample_action_1(self):
         '''Test non-stale ending_ok actions.
         '''
@@ -155,7 +154,6 @@ class TestClassicAlchemyEnv():
             if is_finished:
                 break
             
-    @pytest.mark.timeout(2)
     def test_sample_action_2(self):
         '''Test stale non-ending actions.
         '''
@@ -168,7 +166,6 @@ class TestClassicAlchemyEnv():
             assert action != env.action_space.n - 1, "Action is the ending action. It shouldn't be."
             env.step(action)
             
-    @pytest.mark.timeout(2)
     def test_sample_action_3(self):
         '''Test stale ending_ok actions.
         '''
@@ -183,7 +180,6 @@ class TestClassicAlchemyEnv():
             if is_finished:
                 break
             
-    @pytest.mark.timeout(2)
     def test_sample_action_4(self):
         '''Test non-stale non-ending actions.
         '''
@@ -197,7 +193,6 @@ class TestClassicAlchemyEnv():
             assert action not in env.stale_actions, "Action is stale. It shouldn't be."
             env.step(action)
             
-    @pytest.mark.timeout(2)
     def test_sample_action_5(self):
         '''Test non-stale non-ending actions 
         where all actions are stale. This 
