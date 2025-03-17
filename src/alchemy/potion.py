@@ -15,7 +15,7 @@ class Potion():
         feature_idx: int,
         feature_name: str,
         distribution: Union[stats.rv_discrete, stats.rv_continuous],
-        check_range: bool = True,
+        check_distr: bool = True,
     ):
         '''Initialize a potion that affects a certain feature. The feature 
         of a rock can be increased or decreased by the potion over the range 
@@ -29,19 +29,17 @@ class Potion():
             feature_name (str): The name of the feature to affect.
             distribution (stats.rv_discrete | stats.rv_continuous): The distribution of the potion. You may use any 
             statistical distribution from scipy.stats as long as the sampled values are within the range [0, 1].
-            check_range (bool, optional): Whether to check if the distribution is within the range [0, 1]. Defaults to True.
+            check_distr (bool, optional): Whether to check if the distribution is within the range [0, 1]. Defaults to True.
         
         Raises:
             ValueError: If the distribution is not within the range [0, 1].
         '''
         self.distribution = distribution
-        if distribution is None:
-            self.distribution = stats.binom(1, 1)
         self.feature_idx = feature_idx
         self.feature_name = feature_name
         
         # check if the distribution is within the range [0, 1]
-        if check_range:
+        if check_distr:
             samples = self.distribution.rvs(1000)
             if np.any(samples < 0) or np.any(samples > 1):
                 raise ValueError('The distribution of the potion must be within the range [0, 1].')
