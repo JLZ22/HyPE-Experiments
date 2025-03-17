@@ -211,3 +211,22 @@ class TestClassicAlchemyEnv():
         # try to sample a non-ending action again - should raise an error
         with pytest.raises(RuntimeError):
             env.sample_action(stale_ok=False, ending_ok=False)
+            
+    def test_add_random_blocked_pair_1(self):
+        '''Test that you can add a random blocked pair
+        to the current world if there is space and that
+        it will do nothing if there is no space. Also,
+        checks that return value is correct.
+        '''
+        env = ClassicAlchemyEnv()
+        env.reset()
+        for _ in range(100):
+            init_blocked_pairs_len = len(env.world[1])
+            if len(env.world[1]) == env.max_blocks:
+                assert not env.add_random_blocked_pair(), "add_random_blocked_pair returned True. It should return False."
+                assert len(env.world[1]) == init_blocked_pairs_len, "The number of blocked pairs should be the same."
+            else:
+                assert env.add_random_blocked_pair(), "add_random_blocked_pair returned False. It should return True."
+                assert len(env.world[1]) == init_blocked_pairs_len + 1, "The number of blocked pairs should be one more."
+            
+            env.reset(env.generate_world())

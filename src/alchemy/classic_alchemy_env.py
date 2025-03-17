@@ -231,6 +231,20 @@ class ClassicAlchemyEnv(gym.Env):
                 sample = self.action_space.sample()
             return sample # stale not ok and end not ok
         
+    def add_random_blocked_pair(self) -> bool:
+        '''Add a random blocked (state, action) pair
+        to the current world. If the current world is 
+        None or if the maximum number of blocked pairs
+        has been reached return False. Otherwise, return
+        True.
+        '''
+        if self.world is None or len(self.world[1]) >= self.max_blocks:
+            return False
+        state = self.observation_space.sample()
+        action = self.sample_action(stale_ok=True, ending_ok=False)
+        self.world[1].append((state, action))
+        return True
+        
     def render(self):
         '''Render the environment. This is a no-op.
         '''
