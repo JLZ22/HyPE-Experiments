@@ -35,9 +35,11 @@ class ClassicAlchemyEnv(gym.Env):
         self.finished = False
         self.action_space = gym.spaces.Discrete(2 * self.n + 1)
         self.observation_space = gym.spaces.MultiBinary(self.n)
-        self.curr_state = np.random.randint(0, 2, self.n) # initialize starting state 
+        
+        self.curr_state = None 
         self.reward_func = None
         self.world = self.generate_world()
+        self.reset()
     
     def set_reward_func(self, rewards: dict[str, float]):
         '''Set the reward function for the environment. If None, then the
@@ -46,6 +48,7 @@ class ClassicAlchemyEnv(gym.Env):
         Args:
             rewards (dict[str, float]): The rewards for each feature.
         '''
+        assert isinstance(rewards, dict), "The rewards must be a dictionary."
         for feature in self.features:
             if feature not in rewards:
                 rewards[feature] = 0
@@ -117,6 +120,15 @@ class ClassicAlchemyEnv(gym.Env):
         '''
         if new_wrld is not None:
             self.world = new_wrld
+            assert len(new_wrld) == 2, "The world must have two elements, a list of actions and a list of blocked pairs."
+            assert all([isinstance(act, Potion) for act in new_wrld[0]]), "The actions must be instances of the Potion class."
+            assert all([len(pair) == 2 for pair in new_wrld[1]]), "The blocked pairs must be tuples of length 2."
+            assert all([isinstance(pair[0], np.ndarray) for pair in new_wrld[1]]), "The states in the blocked pairs must be numpy arrays."
+            assert all([pair[0].shape == (self.n,) for pair in new_wrld[1]]), "The states in the blocked pairs must have the same shape as the observation space."
+            assert all([isinstance(pair[1], int) for pair in new_wrld[1]]), "The actions in the blocked pairs must be integers."
+            assert all([pair[1] < self.action_space.n for pair in new_wrld[1]]), "The actions in the blocked pairs must be less than the size of the action space."
+            assert len(new_wrld[0]) == self.action_space.n, "The number of actions must match the size of the action space."
+            assert len(new_wrld[1]) <= self.max_blocks, "The number of blocked pairs must be less than or equal to the maximum number of blocks."
         self.finished = False
         self.curr_state = self.sample_initial_state()
         return self.curr_state

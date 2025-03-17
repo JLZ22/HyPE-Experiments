@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
+import scipy.stats as stats
 
 from src.alchemy.classic_alchemy_env import ClassicAlchemyEnv
+from src.alchemy.potion import Potion
 
 class TestClassicAlchemyEnv():
     def test_generate(self):
@@ -62,3 +64,45 @@ class TestClassicAlchemyEnv():
         
         with pytest.raises(AssertionError):
             env.reward_func(np.array([0]))
+            
+    def test_reset(self):
+        '''Test that the reset function adequately checks that 
+        the input world is valid.
+        '''
+        env = ClassicAlchemyEnv()
+        pot = Potion(0, 'luster', stats.binom(1, 1))
+        
+        # wrong lengths of tuple elements
+        with pytest.raises(AssertionError):
+            env.reset(([], []))
+            
+        # number of actions does not match the action space
+        with pytest.raises(AssertionError):
+            env.reset(([pot] * (env.action_space.n + 2), []))
+            
+        # invalid action in blocked pair (out of range)
+        with pytest.raises(AssertionError):
+            env.reset((
+                [pot] * env.action_space.n, 
+                [(np.random.randint(0, 2, env.n), env.action_space.n)]
+            ))
+            
+        # too many blocked pairs
+        with pytest.raises(AssertionError):
+            env.reset((
+                [pot] * env.action_space.n, 
+                [(np.random.randint(0, 2, env.n), 0)] * (env.max_blocks + 1)
+            ))           
+            
+        # state shape does not match the number of features
+        with pytest.raises(AssertionError):
+            env.reset((
+                [pot] * env.action_space.n, 
+                [(np.random.randint(0, 2, env.n + 1), 0)] * (env.max_blocks + 1)
+            ))  
+            
+        env.reset((
+                [pot] * env.action_space.n, 
+                [(np.random.randint(0, 2, env.n), 0)] * (env.max_blocks)
+            ))   
+        env.reset(([pot] * env.action_space.n, []))
