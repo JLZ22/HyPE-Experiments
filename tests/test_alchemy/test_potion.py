@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 import scipy.stats as stats
 
 from src.alchemy.potion import Potion

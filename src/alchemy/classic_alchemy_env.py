@@ -1,10 +1,10 @@
 import gymnasium as gym 
 import numpy as np
 import scipy.stats as stats
-from typing import Optional
+from typing import Optional, Tuple
 
-from .custom_types import World
 from .potion import Potion
+from .alchemy_world import AlchemyWorld, StateActionPair
 
 class ClassicAlchemyEnv(gym.Env):
     def __init__(
@@ -15,11 +15,13 @@ class ClassicAlchemyEnv(gym.Env):
     ):
         '''Initialize a classic alchemy environment. The action space is 
         2 * len(feature_labels) + 1. One action is to add a feature to the 
-        rock and the other is to remove a feature. The last action is to 
+        rock and the other is to remove a feature. The actions are uni-
+        directional meaning that any single action can only either add or 
+        remove a feature. The last action in the list of actions is to 
         submit the rock for evaluation. The observation space is a binary 
         list of length len(feature_labels) indicating which features are
         present in the rock. This environment is deterministic, so the 
-        distribution that the potion uses is a binomial distribution with
+        distribution that the potion uses is a Bernoulli distribution with
         probabilities 1 and 0 for adding and removing a feature respectively.
 
         Args:
@@ -70,11 +72,11 @@ class ClassicAlchemyEnv(gym.Env):
             return sum([rewards[feature] * state[i] for i, feature in enumerate(self.features)])
         self.reward_func = reward_func
         
-    def generate_world(self) -> World:
+    def generate_world(self) -> AlchemyWorld:
         '''Generate a random world for the environment.
 
         Returns:
-            World: The list of Potions and a list of blocked (state, action) pairs.
+            AlchemyWorld: The world that stores the actions, state transitions, and blocked pairs.
         '''
         actions = []
         blocked_pairs = []
@@ -93,9 +95,9 @@ class ClassicAlchemyEnv(gym.Env):
         for _ in range(num_pairs):
             state = self.observation_space.sample()
             action = self.sample_action(stale_ok=True, ending_ok=False)
-            blocked_pairs.append((state, action))
+            blocked_pairs.append(StateActionPair(state, action))
         
-        return actions, blocked_pairs
+        return AlchemyWorld(actions, blocked_pairs)
     
     def sample_initial_state(self) -> np.ndarray:
         '''Generate the initial state of the environment.
@@ -107,7 +109,7 @@ class ClassicAlchemyEnv(gym.Env):
     
     def reset(
         self,
-        new_wrld: Optional[World] = None
+        new_wrld: Optional[AlchemyWorld] = None
     ) -> np.ndarray:
         '''Reset the environment to an initial state. If a new world 
         is given, then the environment will be reset with that world.
@@ -121,13 +123,11 @@ class ClassicAlchemyEnv(gym.Env):
         '''
         if new_wrld is not None:
             self.world = new_wrld
-            assert len(new_wrld) == 2, "The world must have two elements, a list of actions and a list of blocked pairs."
-            assert all([isinstance(act, Potion) for act in new_wrld[0]]), "The actions must be instances of the Potion class."
-            assert all([len(pair) == 2 for pair in new_wrld[1]]), "The blocked pairs must be tuples of length 2."
-            assert all([pair[0].shape == (self.n,) for pair in new_wrld[1]]), "The states in the blocked pairs must have the same shape as the observation space."
-            assert all([pair[1] < self.action_space.n for pair in new_wrld[1]]), "The actions in the blocked pairs must be less than the size of the action space."
-            assert len(new_wrld[0]) == self.action_space.n, "The number of actions must match the size of the action space."
-            assert len(new_wrld[1]) <= self.max_blocks, "The number of blocked pairs must be less than or equal to the maximum number of blocks."
+            assert isinstance(new_wrld, AlchemyWorld), "The new world must be an instance of the AlchemyWorld class."
+            assert all([state.shape == (self.n,) for state, _ in new_wrld.blocked_pairs]), "The states in the blocked pairs must have the same shape as the observation space."
+            assert all([action < self.action_space.n for _, action in new_wrld.blocked_pairs]), "The actions in the blocked pairs must be less than the size of the action space."
+            assert len(new_wrld.actions) == self.action_space.n, "The number of actions must match the size of the action space."
+            assert len(new_wrld.blocked_pairs) <= self.max_blocks, "The number of blocked pairs must be less than or equal to the maximum number of blocks."
         self.finished = False
         self.stale_actions = set()
         self.curr_state = self.sample_initial_state()
@@ -142,7 +142,7 @@ class ClassicAlchemyEnv(gym.Env):
         '''
         return self.curr_state.copy()
     
-    def step(self, action: int) -> tuple[np.ndarray, float, bool]:
+    def step(self, action: int) -> Tuple[np.ndarray, float, bool]:
         '''Take the given action in the environment and 
         return the new state.
 
@@ -173,7 +173,7 @@ class ClassicAlchemyEnv(gym.Env):
             return self.get_obs(), reward, self.finished
         
         # check if the action is blocked
-        for blocked_state, blocked_action in self.world[1]:
+        for blocked_state, blocked_action in self.world.blocked_pairs:
             if (
                 np.array_equal(self.curr_state, blocked_state) 
                 and 
@@ -183,7 +183,7 @@ class ClassicAlchemyEnv(gym.Env):
                 return self.get_obs(), reward, self.finished
         
         # any other valid action
-        potion = self.world[0][action]
+        potion = self.world.actions[action]
         self.curr_state = potion.use_on(self.curr_state)
         reward = self.time_cost
         return self.get_obs(), reward, self.finished
@@ -238,11 +238,11 @@ class ClassicAlchemyEnv(gym.Env):
         has been reached return False. Otherwise, return
         True.
         '''
-        if self.world is None or len(self.world[1]) >= self.max_blocks:
+        if self.world is None or len(self.world.blocked_pairs) >= self.max_blocks:
             return False
         state = self.observation_space.sample()
         action = self.sample_action(stale_ok=True, ending_ok=False)
-        self.world[1].append((state, action))
+        self.world.add_blocked_pair(state, action)
         return True
         
     def render(self):

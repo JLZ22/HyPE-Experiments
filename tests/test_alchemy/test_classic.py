@@ -3,6 +3,7 @@ import pytest
 import scipy.stats as stats
 
 from src.alchemy.classic_alchemy_env import ClassicAlchemyEnv
+from src.alchemy.alchemy_world import AlchemyWorld, StateActionPair
 from src.alchemy.potion import Potion
 
 REWARDS = {'shiny': 1, 'hard': 0.5}
@@ -14,19 +15,18 @@ class TestClassicAlchemyEnv():
         '''
         env = ClassicAlchemyEnv()
         wrld = env.world
-        assert wrld[0] is not None
-        assert wrld[1] is not None
-        assert len(wrld[0]) == env.action_space.n
-        assert len(wrld[1]) <= env.max_blocks
-        for act in wrld[0]:
+        assert wrld.actions is not None
+        assert wrld.blocked_pairs is not None
+        assert len(wrld.actions) == env.action_space.n
+        assert len(wrld.blocked_pairs) <= env.max_blocks
+        for act in wrld.actions:
             assert act is not None
-        for pair in wrld[1]:
-            assert pair is not None
-            assert len(pair) == 2
-            assert pair[0] is not None
-            assert pair[1] is not None
-            assert env.observation_space.contains(pair[0])
-            assert env.action_space.contains(pair[1])
+        for state, action in wrld.blocked_pairs:
+            assert state is not None
+            assert state is not None
+            assert action is not None
+            assert env.observation_space.contains(state)
+            assert env.action_space.contains(action)
             
     def test_reward_func_1(self):
         '''Test the case where the reward function is set with all features.
@@ -73,38 +73,38 @@ class TestClassicAlchemyEnv():
         
         # wrong lengths of tuple elements
         with pytest.raises(AssertionError):
-            env.reset(([], []))
+            env.reset(AlchemyWorld([], []))
             
         # number of actions does not match the action space
         with pytest.raises(AssertionError):
-            env.reset(([pot] * (env.action_space.n + 2), []))
+            env.reset(AlchemyWorld([pot] * (env.action_space.n + 2), []))
             
         # invalid action in blocked pair (out of range)
         with pytest.raises(AssertionError):
-            env.reset((
+            env.reset(AlchemyWorld(
                 [pot] * env.action_space.n, 
-                [(env.observation_space.sample(), env.action_space.n)]
+                [StateActionPair(env.observation_space.sample(), env.action_space.n)]
             ))
             
         # too many blocked pairs
         with pytest.raises(AssertionError):
-            env.reset((
+            env.reset(AlchemyWorld(
                 [pot] * env.action_space.n, 
-                [(env.observation_space.sample(), 0)] * (env.max_blocks + 1)
+                [StateActionPair(env.observation_space.sample(), 0)] * (env.max_blocks + 1)
             ))           
             
         # state shape does not match the number of features
         with pytest.raises(AssertionError):
-            env.reset((
+            env.reset(AlchemyWorld(
                 [pot] * env.action_space.n, 
-                [(np.random.randint(0, 2, env.n + 1), 0)] * (env.max_blocks + 1)
+                [StateActionPair(np.random.randint(0, 2, env.n + 1), 0)] * (env.max_blocks + 1)
             ))  
             
-        env.reset((
+        env.reset(AlchemyWorld(
                 [pot] * env.action_space.n, 
-                [(env.observation_space.sample(), 0)] * (env.max_blocks)
+                [StateActionPair(env.observation_space.sample(), 0)] * (env.max_blocks)
             ))   
-        env.reset(([pot] * env.action_space.n, []))
+        env.reset(AlchemyWorld([pot] * env.action_space.n, []))
         
     def test_step_1(self):
         '''Test the step function with valid non-ending actions. 
@@ -221,12 +221,12 @@ class TestClassicAlchemyEnv():
         env = ClassicAlchemyEnv()
         env.reset()
         for _ in range(100):
-            init_blocked_pairs_len = len(env.world[1])
-            if len(env.world[1]) == env.max_blocks:
+            init_blocked_pairs_len = len(env.world.blocked_pairs)
+            if len(env.world.blocked_pairs) == env.max_blocks:
                 assert not env.add_random_blocked_pair(), "add_random_blocked_pair returned True. It should return False."
-                assert len(env.world[1]) == init_blocked_pairs_len, "The number of blocked pairs should be the same."
+                assert len(env.world.blocked_pairs) == init_blocked_pairs_len, "The number of blocked pairs should be the same."
             else:
                 assert env.add_random_blocked_pair(), "add_random_blocked_pair returned False. It should return True."
-                assert len(env.world[1]) == init_blocked_pairs_len + 1, "The number of blocked pairs should be one more."
+                assert len(env.world.blocked_pairs) == init_blocked_pairs_len + 1, "The number of blocked pairs should be one more."
             
             env.reset(env.generate_world())
