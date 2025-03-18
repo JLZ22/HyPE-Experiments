@@ -31,12 +31,12 @@ class ClassicAlchemyEnv(gym.Env):
             can be blocked. Defaults to 5.
         '''
         self.features = feature_labels
-        self.n = len(feature_labels)
+        self.num_features = len(feature_labels)
         self.time_cost = time_cost
         self.max_blocks = max_blocks
         self.finished = False
-        self.action_space = gym.spaces.Discrete(2 * self.n + 1)
-        self.observation_space = gym.spaces.MultiBinary(self.n)
+        self.action_space = gym.spaces.Discrete(2 * self.num_features + 1)
+        self.observation_space = gym.spaces.MultiBinary(self.num_features)
         self.stale_actions = set() # set of actions that have been already taken in this episode
         
         self.curr_state = None 
@@ -82,12 +82,12 @@ class ClassicAlchemyEnv(gym.Env):
         blocked_pairs = []
         # generate the deterministic actions for the environment
         i = 0
-        while i < 2 * self.n:
+        while i < 2 * self.num_features:
             actions.append(Potion(i // 2, self.features[i // 2], stats.binom(1, 1)))
             i += 1
             actions.append(Potion(i // 2, self.features[i // 2], stats.binom(1, 0)))
             i += 1
-        actions.append(Potion(2 * self.n, 'submit', stats.binom(1, 1)))
+        actions.append(Potion(2 * self.num_features, 'submit', stats.binom(1, 1)))
             
         # generate random blocked pairs 
         num_pairs = np.random.randint(0, self.max_blocks)
@@ -124,7 +124,7 @@ class ClassicAlchemyEnv(gym.Env):
         if new_wrld is not None:
             self.world = new_wrld
             assert isinstance(new_wrld, AlchemyWorld), "The new world must be an instance of the AlchemyWorld class."
-            assert all([state.shape == (self.n,) for state, _ in new_wrld.blocked_pairs]), "The states in the blocked pairs must have the same shape as the observation space."
+            assert all([state.shape == (self.num_features,) for state, _ in new_wrld.blocked_pairs]), "The states in the blocked pairs must have the same shape as the observation space."
             assert all([action < self.action_space.n for _, action in new_wrld.blocked_pairs]), "The actions in the blocked pairs must be less than the size of the action space."
             assert len(new_wrld.actions) == self.action_space.n, "The number of actions must match the size of the action space."
             assert len(new_wrld.blocked_pairs) <= self.max_blocks, "The number of blocked pairs must be less than or equal to the maximum number of blocks."
@@ -167,7 +167,7 @@ class ClassicAlchemyEnv(gym.Env):
         
         self.stale_actions.add(action)
         
-        if action == 2 * self.n: # check if the action is to submit the rock
+        if action == 2 * self.num_features: # check if the action is to submit the rock
             self.finished = True
             reward = self.reward_func(self.curr_state) # reward is gained at final evaluation
             return self.get_obs(), reward, self.finished

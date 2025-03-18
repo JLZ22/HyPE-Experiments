@@ -97,7 +97,7 @@ class TestClassicAlchemyEnv():
         with pytest.raises(AssertionError):
             env.reset(AlchemyWorld(
                 [pot] * env.action_space.n, 
-                [StateActionPair(np.random.randint(0, 2, env.n + 1), 0)] * (env.max_blocks + 1)
+                [StateActionPair(np.random.randint(0, 2, env.num_features + 1), 0)] * (env.max_blocks + 1)
             ))  
             
         env.reset(AlchemyWorld(
