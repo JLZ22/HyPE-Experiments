@@ -167,14 +167,8 @@ class ClassicAlchemyEnv(gym.Env):
             return self.get_obs(), reward, self.finished
         
         # check if the action is blocked
-        for blocked_state, blocked_action in self.world.blocked_pairs:
-            if (
-                np.array_equal(self.curr_state, blocked_state) 
-                and 
-                action == blocked_action
-            ):
-                reward = self.time_cost
-                return self.get_obs(), reward, self.finished
+        if self.is_blocked(self.curr_state, action):
+            return self.get_obs(), self.time_cost, self.finished
         
         # any other valid action
         potion = self.world.actions[action]
@@ -251,3 +245,22 @@ class ClassicAlchemyEnv(gym.Env):
         state = self.observation_space.sample()
         action = self.sample_action(stale_ok=True, ending_ok=False)
         return StateActionPair(state, action)
+    
+    def is_blocked(self, state: np.ndarray, action: int) -> bool:
+        '''Checks if the given (state, action) pair is blocked.
+
+        Args:
+            state (np.ndarray): The state.
+            action (int): The action.
+
+        Returns:
+            bool: True if the pair is blocked, False otherwise.
+        '''
+        for blocked_state, blocked_action in self.world.blocked_pairs:
+            if (
+                np.array_equal(state, blocked_state) 
+                and 
+                action == blocked_action
+            ):
+                return True
+        return False

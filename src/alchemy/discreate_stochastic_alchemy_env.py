@@ -65,6 +65,9 @@ class DiscreteStochasticAlchemyEnv(ClassicAlchemyEnv):
         Returns:
             AlchemyWorld: The world that stores actions, 
             transition dynamics, and blocked (state, action) pairs.
+    
+        Raises:
+            AssertionError: If the length of feature_probabilities is not equal to self.num_features.
         '''
         assert len(feature_probabilities) == self.num_features, 'You must provide a probability of success for each feature.'
         actions = []
