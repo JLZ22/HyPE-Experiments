@@ -20,6 +20,7 @@ Then, re-install PyTorch with CUDA support by following the instructions on the 
 
 ## Usage
 
+### Experiments
 To run any of the experiments in the `./experiments` directory, navigate to the root directory of the project and run the following command:
 
 ```bash
@@ -34,3 +35,10 @@ If you want to run `foo.py`, run the following command:
 python3 -m scripts.foo
 ```
 </details>
+
+### Tests
+To run the tests, navigate to the root directory of the project and run the following command:
+
+```bash
+pytest
+```
