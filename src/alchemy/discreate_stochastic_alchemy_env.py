@@ -75,8 +75,8 @@ class DiscreteStochasticAlchemyEnv(ClassicAlchemyEnv):
         # Add an action for each feature according to the given probabilities
         for i in range(self.num_features):
             p = feature_probabilities[i]
-            actions.append(Potion(i, 1, stats.binom(1, p)))
-            actions.append(Potion(i, 0, stats.binom(1, 1 - p)))
+            actions.append(Potion(i, self.features[i], stats.binom(1, p)))
+            actions.append(Potion(i, self.features[i], stats.binom(1, 1 - p)))
         actions.append(Potion(2 * self.num_features, 'submit', stats.binom(1, 1)))
             
         # Add random blocked (state, action) pairs
