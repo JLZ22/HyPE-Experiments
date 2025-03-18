@@ -81,21 +81,15 @@ class ClassicAlchemyEnv(gym.Env):
         actions = []
         blocked_pairs = []
         # generate the deterministic actions for the environment
-        i = 0
-        while i < 2 * self.num_features:
-            actions.append(Potion(i // 2, self.features[i // 2], stats.binom(1, 1)))
-            i += 1
-            actions.append(Potion(i // 2, self.features[i // 2], stats.binom(1, 0)))
-            i += 1
+        for i in range(self.num_features):
+            actions.append(Potion(i, self.features[i], stats.binom(1, 1)))
+            actions.append(Potion(i, self.features[i], stats.binom(1, 0)))
         actions.append(Potion(2 * self.num_features, 'submit', stats.binom(1, 1)))
             
         # generate random blocked pairs 
         num_pairs = np.random.randint(0, self.max_blocks)
-        
         for _ in range(num_pairs):
-            state = self.observation_space.sample()
-            action = self.sample_action(stale_ok=True, ending_ok=False)
-            blocked_pairs.append(StateActionPair(state, action))
+            blocked_pairs.append(self._generate_random_state_action_pair())
         
         return AlchemyWorld(actions, blocked_pairs)
     
@@ -240,12 +234,20 @@ class ClassicAlchemyEnv(gym.Env):
         '''
         if self.world is None or len(self.world.blocked_pairs) >= self.max_blocks:
             return False
-        state = self.observation_space.sample()
-        action = self.sample_action(stale_ok=True, ending_ok=False)
-        self.world.add_blocked_pair(state, action)
+        self.world.blocked_pairs.append(self._generate_random_state_action_pair())
         return True
         
     def render(self):
         '''Render the environment. This is a no-op.
         '''
         pass
+    
+    def _generate_random_state_action_pair(self) -> StateActionPair:
+        '''Generate a random blocked (state, action) pair.
+
+        Returns:
+            StateActionPair: The random blocked pair.
+        '''
+        state = self.observation_space.sample()
+        action = self.sample_action(stale_ok=True, ending_ok=False)
+        return StateActionPair(state, action)

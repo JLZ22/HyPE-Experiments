@@ -31,12 +31,3 @@ class AlchemyWorld():
         '''
         self.actions = actions
         self.blocked_pairs = blocked_pairs
-        
-    def add_blocked_pair(self, state: np.ndarray, action: int):
-        '''Add a blocked state-action pair to the world.
-
-        Args:
-            state (np.ndarray): The state of the rock.
-            action (int): The action to be blocked.
-        '''
-        self.blocked_pairs.append(StateActionPair(state, action))
