@@ -7,18 +7,21 @@ NUM_FEATURES = 6
 LATENT_SIZE = 3
 
 class TestLatentEncoder():
+    @torch.no_grad()
     def test_forward(self):
         model = LatentEncoder(NUM_FEATURES, LATENT_SIZE)
         obs = torch.randn(1, NUM_FEATURES)
         latent_obs, _ = model(obs)
         assert latent_obs.shape == (1, LATENT_SIZE), 'Latent observation shape is incorrect.'
         
+    @torch.no_grad()
     def test_failure(self):
         model = LatentEncoder(NUM_FEATURES, LATENT_SIZE)
         obs = torch.randn(1, NUM_FEATURES + 1)
         with pytest.raises(RuntimeError):
             model(obs)
             
+    @torch.no_grad()
     def test_memo(self):
         model = LatentEncoder(NUM_FEATURES, LATENT_SIZE)
         obs = torch.randn(1, NUM_FEATURES)
@@ -40,6 +43,7 @@ class TestLatentEncoder():
         _, did_mem = model(obs)
         assert not did_mem, 'Model should not have retrived a memoized tensor. Memoization was stopped.'
         
+    @torch.no_grad()
     def test_device_consistency(self):
         model = LatentEncoder(NUM_FEATURES, LATENT_SIZE)
         obs = torch.randn(1, NUM_FEATURES).to('cpu')

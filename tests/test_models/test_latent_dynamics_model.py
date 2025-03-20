@@ -7,6 +7,7 @@ LATENT_SIZE = 3
 NUM_ACTIONS = 9
 
 class TestLatentDynamicsModel():
+    @torch.no_grad()
     def test_forward(self):
         model = LatentDynamicsModel(LATENT_SIZE, NUM_ACTIONS, delta_mode=True)
         sample_state = torch.randn(1, LATENT_SIZE)
@@ -16,6 +17,7 @@ class TestLatentDynamicsModel():
         assert reward.shape == (1, 1), 'Reward shape should be (1, 1).'
         assert term.shape == (1, 1), 'Termination signal shape should be (1, 1).'
     
+    @torch.no_grad()
     def test_memo(self):
         model = LatentDynamicsModel(LATENT_SIZE, NUM_ACTIONS, delta_mode=True)
         sample_state = torch.randn(1, LATENT_SIZE)
@@ -43,6 +45,7 @@ class TestLatentDynamicsModel():
         _, _, _, did_mem = model.forward(sample_state, sample_action)
         assert not did_mem, 'Model should not memoize after stopping memoization.'
         
+    @torch.no_grad()
     def test_failure(self):
         model = LatentDynamicsModel(LATENT_SIZE, NUM_ACTIONS, delta_mode=True)
         sample_state = torch.randn(1, LATENT_SIZE + 1)
@@ -50,6 +53,7 @@ class TestLatentDynamicsModel():
         with pytest.raises(RuntimeError):
             model.forward(sample_state, sample_action)
             
+    @torch.no_grad()
     def test_device_consistency(self):
         model = LatentDynamicsModel(LATENT_SIZE, NUM_ACTIONS, delta_mode=True)
         sample_state = torch.randn(1, LATENT_SIZE).to('cpu')
