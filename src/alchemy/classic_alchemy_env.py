@@ -125,7 +125,7 @@ class ClassicAlchemyEnv(gym.Env):
         self.finished = False
         self.stale_actions = set()
         self.curr_state = self.sample_initial_state()
-        return self.curr_state
+        return self.get_obs()
     
     def get_obs(self) -> np.ndarray:
         '''Return the observed current state 
