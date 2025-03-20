@@ -1,4 +1,5 @@
 import gymnasium as gym
+import numpy as np
 import torch
 
 from typing import List, Tuple
@@ -8,7 +9,6 @@ class MPC_Actor():
     def __init__(
         self, 
         action_space: gym.spaces.Discrete,
-        device: torch.device = None,
     ):
         '''Initialize a DFS Actor who traverses 
         a model of the environment using DFS to 
@@ -16,11 +16,8 @@ class MPC_Actor():
 
         Args:
             action_space (gym.spaces.Discrete): The action space of the environment.
-            device (torch.device, optional): The device to use for our tensor
-            operations. If None, the best compatible one will be chosen. Defaults to None.
         '''
         self.action_space = action_space
-        self.device = get_device(device)
         self.path = []
         
     def _dfs(
@@ -52,7 +49,7 @@ class MPC_Actor():
             # One-hot encode the action
             action_one_hot = torch.zeros(self.action_space.n)
             action_one_hot[action] = 1
-            action_one_hot = action_one_hot.unsqueeze(0).to(self.device)
+            action_one_hot = action_one_hot.unsqueeze(0)
             
             # Predict the next latent observation, reward, and termination signal
             next_latent_obs, pred_reward, pred_term, _ = model.run(latent_obs, action_one_hot)
@@ -80,3 +77,29 @@ class MPC_Actor():
                 best_reward = ret_reward
                 best_path = ret_path
         return best_reward, best_path
+    
+    def step(
+        self,
+        model: torch.nn.Module,
+        enc: torch.nn.Module,
+        obs: np.ndarray,
+        horizon: int=4,
+    ) -> int: 
+        '''Perform depth limited search to find the action 
+        that leads to the path that maximizes the reward.
+
+        Args:
+            model (torch.nn.Module): The model of the world.
+            enc (torch.nn.Module): The encoder that encodes the observation into latent space.
+            obs (np.ndarray): The raw observation.
+            horizon (int, optional): The horizon of the search. Defaults to 4.
+
+        Returns:
+            int: The action.
+        '''
+        obs = torch.tensor(obs, dtype=torch.float).unsqueeze(0)
+        import logging
+        logging.info(f'obs: {obs}')
+        latent_obs, _ = enc(obs)
+        _, best_path = self._dfs(model, latent_obs, horizon, 0, [])
+        return best_path[0]

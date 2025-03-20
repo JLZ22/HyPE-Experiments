@@ -47,7 +47,7 @@ class ContinuousStochasticAlchemyEnv(ClassicAlchemyEnv):
         self.block_tolerance = block_tolerance
         self.finished = False
         self.action_space = gym.spaces.Discrete(self.num_features + 1)
-        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.num_features,), dtype=np.float16)
+        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.num_features,), dtype=float)
         self.stale_actions = set() # set of actions that have been already taken in this episode
         
         self.curr_state = None 

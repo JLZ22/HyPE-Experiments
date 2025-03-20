@@ -54,7 +54,7 @@ class AlchemyDataset(Dataset):
                 existing_points, 
                 torch.tensor(
                     np.expand_dims(new_point, axis=0),
-                    dtype=torch.float16
+                    dtype=torch.float
                 )
             ])
             self.observations       = concat(self.observations, observation)
@@ -65,7 +65,7 @@ class AlchemyDataset(Dataset):
         else:
             make_tensor = lambda point: torch.tensor(
                 np.expand_dims(point, axis=0), 
-                dtype=torch.float16
+                dtype=torch.float
             )
             self.observations       = make_tensor(observation)
             self.actions            = make_tensor(action)
