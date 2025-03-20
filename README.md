@@ -42,3 +42,11 @@ To run the tests, navigate to the root directory of the project and run the foll
 ```bash
 pytest
 ```
+
+For logging, you can use the following command:
+
+```bash
+pytest --log-cli-level=INFO
+```
+
+The hierarchy of logging levels from least to most verbose is `CRITICAL`, `ERROR`, `WARNING`, `INFO`, `DEBUG`.
