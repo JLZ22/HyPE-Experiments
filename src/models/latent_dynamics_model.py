@@ -2,14 +2,15 @@ import torch
 import torch.nn as nn
 
 from typing import Tuple
-from src.utils import HashedTensor
+from src.utils import HashedTensor, get_device
 
 class LatentDynamicsModel(nn.Module):
     def __init__(
         self,
-        state_dim: int,
+        latent_state_dim: int,
         action_dim: int,
         delta_mode: bool = False,
+        device: torch.device = None,
     ):
         '''Initialize the LatentDynamicsModel which 
         is a neural network that predicts the next state, the
@@ -22,14 +23,17 @@ class LatentDynamicsModel(nn.Module):
             actions are one-hot encoded, this is the magnitude of the action space.
             delta_mode (bool, optional): If True, state predictions will be additive 
             instead of absolute. Defaults to False.
+            device (torch.device, optional): The device to run the model on. If None, 
+            the best compatible device will be chosen for you. Defaults to None.
         '''
         super(LatentDynamicsModel, self).__init__()
         self.delta_mode = delta_mode
-        self.fc1 = nn.Linear(state_dim + action_dim, 256)
-        self.fc2 = nn.Linear(256, 32)
-        self.latent_out = nn.Linear(32, state_dim)
-        self.reward_out = nn.Linear(32, 1)
-        self.term_out = nn.Linear(32, 1)
+        self.device = get_device(device)
+        self.fc1 = nn.Linear(latent_state_dim + action_dim, 256).to(self.device)
+        self.fc2 = nn.Linear(256, 32).to(self.device)
+        self.latent_out = nn.Linear(32, latent_state_dim).to(self.device)
+        self.reward_out = nn.Linear(32, 1).to(self.device)
+        self.term_out = nn.Linear(32, 1).to(self.device)
         self.delta_mode = delta_mode
         self.memoize_on = False
         self.memos = {}
@@ -79,6 +83,8 @@ class LatentDynamicsModel(nn.Module):
             predicted reward, predicted termination signal, and a boolean indicating if memoization
             was used to retrieve the prediction.
         '''
+        latent_obs = latent_obs.to(self.device)
+        action = action.to(self.device)
         x = torch.cat([latent_obs, action], dim=-1)
         # check if this input has been memoized
         if self.memoize_on:   # We will assume no batches during memoization.
