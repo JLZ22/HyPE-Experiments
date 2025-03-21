@@ -26,7 +26,7 @@ class LatentDynamicsModel(nn.Module):
             device (torch.device, optional): The device to run the model on. If None, 
             the best compatible device will be chosen for you. Defaults to None.
         '''
-        super(LatentDynamicsModel, self).__init__()
+        super().__init__()
         self.delta_mode = delta_mode
         self.device = get_device(device)
         self.fc1 = nn.Linear(latent_state_dim + action_dim, 256).to(self.device)
