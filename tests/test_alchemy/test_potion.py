@@ -3,6 +3,7 @@ import pytest
 import scipy.stats as stats
 
 from src.alchemy.potion import Potion
+from src.utils import init_truncnorm
 
 class TestPotion():        
     def test_out_of_range(self):
@@ -20,7 +21,7 @@ class TestPotion():
         
         distributions = [
             stats.binom(1, 0.5),
-            truncnorm(0.5, 0.2, 0, 1),
+            init_truncnorm(0, 1, 0.5, 0.2),
             stats.uniform(0, 1),
             stats.truncexpon(1)
         ]

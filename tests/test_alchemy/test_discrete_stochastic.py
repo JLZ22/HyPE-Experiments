@@ -23,9 +23,8 @@ class TestDiscreteStochasticAlchemyEnv():
             pos_successes = 0
             neg_successes = 0
             for _ in range(num_tests):
-                for _ in range(num_samples):
-                    pos_samples.append(env.world.actions[idx].distribution.rvs())
-                    neg_samples.append(env.world.actions[idx + 1].distribution.rvs())
+                pos_samples.extend(env.world.actions[idx].distribution.rvs(num_samples))
+                neg_samples.extend(env.world.actions[idx + 1].distribution.rvs(num_samples))
                 if np.mean(pos_samples) - p < 3*standard_error_of_mean:
                     pos_successes += 1
                 if np.mean(neg_samples) - q < 3*standard_error_of_mean:

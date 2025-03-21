@@ -26,9 +26,7 @@ class TestContinuousStochasticAlchemyEnv():
         for i in range(env.num_features):
             num_successes = 0
             for _ in range(num_tests):
-                samples = []
-                for _ in range(num_samples):
-                    samples.append(env.world.actions[i].distribution.rvs())
+                samples = env.world.actions[i].distribution.rvs(num_samples)
                 _, p_value = stats.kstest(samples, distributions[i].cdf)
                 if p_value > 0.05:
                     num_successes += 1
