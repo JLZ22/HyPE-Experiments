@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 from typing import List, Tuple
-from src.utils import get_device
+from src.utils import to_one_hot
 
 class MPC_Actor():
     def __init__(
@@ -46,10 +46,7 @@ class MPC_Actor():
         best_reward = -float('inf')
         best_path = None
         for action in reversed(range(self.action_space.n)):
-            # One-hot encode the action
-            action_one_hot = torch.zeros(self.action_space.n)
-            action_one_hot[action] = 1
-            action_one_hot = action_one_hot.unsqueeze(0)
+            action_one_hot = to_one_hot(action, self.action_space.n)
             
             # Predict the next latent observation, reward, and termination signal
             next_latent_obs, pred_reward, pred_term, _ = model.run(latent_obs, action_one_hot)
@@ -98,8 +95,6 @@ class MPC_Actor():
             int: The action.
         '''
         obs = torch.tensor(obs, dtype=torch.float).unsqueeze(0)
-        import logging
-        logging.info(f'obs: {obs}')
         latent_obs, _ = enc(obs)
         _, best_path = self._dfs(model, latent_obs, horizon, 0, [])
         return best_path[0]

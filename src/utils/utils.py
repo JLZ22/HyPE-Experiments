@@ -9,3 +9,17 @@ def get_device(device: torch.device = None) -> torch.device:
     elif torch.backends.mps.is_available():
         device = 'mps'
     return torch.device(device)
+
+def to_one_hot(action: int, action_space_size: int) -> torch.Tensor:
+    '''Convert the given action to one-hot encoding.
+
+    Args:
+        action (int): The action to convert.
+        action_space_size (int): The size of the action space.
+
+    Returns:
+        torch.Tensor: The one-hot encoded action.
+    '''
+    action_one_hot = torch.zeros(1, action_space_size)
+    action_one_hot[0][action] = 1.0
+    return action_one_hot
