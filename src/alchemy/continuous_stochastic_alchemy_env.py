@@ -82,12 +82,11 @@ class ContinuousStochasticAlchemyEnv(ClassicAlchemyEnv):
             AlchemyWorld: The world that stores actions, 
             transition dynamics, and blocked (state, action) pairs.
         '''
-        stds = np.random.uniform(0.1, 0.91, size=self.num_features)
-        locs = np.random.uniform(0.1, 0.91, size=self.num_features)
-        a = (0 - locs) / stds
-        b = (1 - locs) / stds
         distributions = [
-            stats.truncnorm(a[i], b[i], loc=locs[i], scale=stds[i]) for i in range(self.num_features)
+            stats.beta(
+                np.random.random() * 5, 
+                np.random.random() * 5
+            ) for _ in range(self.num_features)
         ]
         return self.generate_world_from_distributions(distributions)
 

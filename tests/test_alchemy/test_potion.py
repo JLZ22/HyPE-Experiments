@@ -15,15 +15,11 @@ class TestPotion():
     def test_distributions(self):
         '''Test the Potion class with different distributions.
         '''
-        def truncnorm(mean, std, lower, upper):
-            a, b = (lower - mean) / std, (upper - mean) / std
-            return stats.truncnorm(a, b, loc=mean, scale=std)
-        
         distributions = [
             stats.binom(1, 0.5),
             init_truncnorm(0, 1, 0.5, 0.2),
             stats.uniform(0, 1),
-            stats.truncexpon(1)
+            stats.beta(2, 2)
         ]
         
         for dist in distributions:

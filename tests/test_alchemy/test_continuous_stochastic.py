@@ -12,7 +12,7 @@ class TestContinuousStochasticAlchemyEnv():
         distributions = [
             truncnorm(0.4, 0.3, 0, 1),
             truncnorm(0.5, 0.2, 0, 1),
-            stats.truncexpon(1)
+            stats.beta(2, 2)
         ]
         env = ContinuousStochasticAlchemyEnv()
         env.reset(env.generate_world_from_distributions(distributions))
